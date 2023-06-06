@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:app_code xmlns:local="*" xmlns="http://www.adobe.com/2006/mxml" xmlns:qs="qs.controls.*"   xmlns:g="qs.graphics.*"
+	xmlns:qc="qs.containers.*"
+	 xmlns:ns1="qs.containers.*" xmlns:effects="qs.effects.*" width="468" layout="absolute" height="500">
+
+	<Script source="app_imports.as" />
+	<Canvas width="468" borderStyle="none" height="272" x="0" y="10">
+		<Canvas height="267"  borderStyle="none"  width="178">
+			<Canvas width="166" height="25" horizontalCenter="0" y="5">
+				<Image  source="assets/Hidepod_Left2.png" buttonMode="true" toolTip="vor" 
+			   	    click="cal.previous(); "  verticalAlign="middle" horizontalCenter="-60" verticalCenter="0"/>
+				<Image  source="assets/ButtonBackground.png" click="goToToday();" buttonMode="true" 
+						 horizontalCenter="0" verticalCenter="0" width="47" height="15"/>
+			 	<Image  source="assets/Hidepod_Right2.png" buttonMode="true" 
+						toolTip="zurück" click="cal.next();" verticalAlign="middle" horizontalCenter="60" verticalCenter="0"/>
+			</Canvas> 
+			<Canvas  width="178" y="30" height="52" horizontalCenter="0">
+				<Label styleName="headerLabel" text="{formatDate(cal.range.start)}" 
+					 color="#FFFFFF" fontFamily="verdana" fontSize="10" fontWeight="normal" width="166" height="25" y="0" horizontalCenter="0" textAlign="center"/>			
+				<ToggleButtonBar dataProvider="{displayOptions}" selectedIndex="0"  
+					 id="displayMode" itemClick="displayModeItemClickHandler()"  y="25" height="25" width="166" horizontalCenter="0"/>				
+			</Canvas>
+			<Canvas width="178"  y="85" height="178" horizontalCenter="0">
+				<DateChooser id="chooser" change="updateRange()" allowDisjointSelection="false" 
+					firstDayOfWeek="1" allowMultipleSelection="true"  width="166" height="166" horizontalCenter="0" verticalCenter="0" backgroundAlpha="0">
+					<selectedDate>
+						<Date month="8" date="1" fullYear="2006" />
+					</selectedDate>
+				</DateChooser>
+				<Label x="10" y="150" text="" width="158" height="168" id="aus" color="#FFFFFF"/>
+			</Canvas>
+		  <Canvas width="178" height="20" y="35" >
+				<local:Busy id="busy" width="178"  height="20"/>
+			</Canvas>
+		</Canvas>
+		<Canvas borderStyle="none" width="290" height="267" x="178" >
+			<Canvas borderStyle="none" height="263" width="290" x="0" >
+			<qs:CalendarDisplay  id="cal" width="280" height="257"
+				headerClick="headerClickHandler(event.dateTime)" 
+			dayClick="dayClickHandler(event.dateTime)"
+			displayModeChange="displayModeHandler()"
+			animated="true"
+			change="rangeChangeHandler()" />
+			</Canvas>
+		</Canvas>
+</Canvas>
+</local:app_code>

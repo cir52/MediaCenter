@@ -1,0 +1,69 @@
+<VideoList>
+	<File>
+		<VideoFolder>VideoArchiv3/</VideoFolder>
+		<VideoName>palmen</VideoName>
+		<Title>Drehscheibe vom 25.01.2010</Title>
+		<Text>- Sachsen droht Winterchaos
+- Nacktscanner umstritten
+		</Text>
+		<Author>SACHSEN FERNSEHEN</Author>
+		<ThumbFolder>images/</ThumbFolder>
+		<ThumbName>buntePalmen.png</ThumbName>
+		<Date>25.01.2010</Date>
+    </File>
+	<File>
+        <VideoFolder>VideoArchiv3/</VideoFolder>
+        <VideoName>20090915_drehscheibe</VideoName>
+		<Title>Drehscheibe Chemnitz vom 15.09.2009</Title>
+        <Text>- Negativer Titel für Chemnitz
+- Neue Kita in Chemnitzer City</Text>
+        <Author>SACHSEN FERNSEHEN</Author>
+        <ThumbFolder>images/</ThumbFolder>
+		<ThumbName>20090915.png</ThumbName>
+        <Date>15.09.2009</Date>
+    </File>
+	<File>
+        <VideoFolder>VideoArchiv3/</VideoFolder>
+        <VideoName>meer</VideoName>
+		<Title>Drehscheibe Chemnitz vom 15.09.2009</Title>
+        <Text>- Sachsen auf Grüner Woche
+- Kurzarbeit in Chemnitz bleibt</Text>
+        <Author>SACHSEN FERNSEHEN</Author>
+        <ThumbFolder>images/</ThumbFolder>
+		<ThumbName>meer.png</ThumbName>
+        <Date>12.01.2010</Date>
+    </File>
+	<File>
+        <VideoFolder>VideoArchiv3/</VideoFolder>
+        <VideoName>trickfilm</VideoName>
+		<Title>Drehscheibe Chemnitz vom 15.09.2009</Title>
+        <Text>- Großbrand in Zwickau
+- Neue Technik im Briefzentrum </Text>
+        <Author>SACHSEN FERNSEHEN</Author>
+        <ThumbFolder>images/</ThumbFolder>
+		<ThumbName>trickfilm.png</ThumbName>
+        <Date>05.01.2010</Date>
+    </File>	
+	<File>
+        <VideoFolder>VideoArchiv3/</VideoFolder>
+        <VideoName>rochen</VideoName>
+		<Title>Drehscheibe Chemnitz vom 15.09.2009</Title>
+        <Text>- Neue Tigerin kommt nach Chemnitz
+- Brückenbau am Chemnitzer Falkeplatz</Text>
+        <Author>SACHSEN FERNSEHEN</Author>
+        <ThumbFolder>images/</ThumbFolder>
+		<ThumbName>rochen.png</ThumbName>
+        <Date>04.01.2010</Date>
+    </File>	
+	<File>
+        <VideoFolder>VideoArchiv3/</VideoFolder>
+        <VideoName>matrix</VideoName>
+		<Title>Neo Pren</Title>
+        <Text>- Einbrecher kamen in der Nacht
+- Stromausfall in Chemnitz</Text>
+        <Author>SACHSEN FERNSEHEN</Author>
+        <ThumbFolder>images/</ThumbFolder>
+		<ThumbName>matrix.png</ThumbName>
+        <Date>07.01.2010</Date>
+	</File>
+</VideoList>

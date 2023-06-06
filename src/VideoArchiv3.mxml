@@ -1,0 +1,1149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:mx="http://www.adobe.com/2006/mxml"
+				xmlns:local="*" x="0" y="0"
+				xmlns="http://www.adobe.com/2006/mxml" xmlns:qs="qs.controls.*"   xmlns:g="qs.graphics.*"
+	xmlns:qc="qs.containers.*"
+ 	xmlns:ns1="qs.containers.*" xmlns:effects="qs.effects.*" xmlns:containers="com.dougmccune.containers.*" xmlns:coverflow="com.dougmccune.coverflow.*"
+		   		creationComplete="init();" backgroundGradientColors="[#6a99d1,#055f94]" backgroundGradientAlphas="[1.0, 1.0]" 
+		   		horizontalAlign="center" layout="absolute" horizontalScrollPolicy="off" verticalScrollPolicy="off" 
+		   		frameRate="30" >
+
+<mx:Script>
+	<![CDATA[
+	
+		import mx.collections.IList;
+		import mx.graphics.SolidColor;
+		import qs.calendar.iCalClasses.*;
+		import qs.calendar.iParserClasses.*;
+		import qs.calendar.*;
+		import qs.controls.*;
+		import qs.effects.*;
+		import qs.graphics.*;
+		import qs.effects.effectClasses.*;
+		import qs.controls.CalendarDisplayClasses.*;
+
+		import qs.calendar.iParser;
+		import qs.controls.CalendarDisplay;
+		import qs.utils.*;
+	
+
+		use namespace mx_internal;
+
+		import mx.managers.ToolTipManager;
+		import mx.controls.videoClasses.VideoError;
+		import mx.states.SetStyle;
+		import mx.core.IUIComponent;
+		import mx.utils.StringUtil;
+		import mx.events.IndexChangedEvent; import mx.events.SliderEvent; import mx.events.VideoEvent;	import mx.controls.VideoDisplay;
+		import flash.utils.setTimeout; import flash.events.NetStatusEvent; import flash.events.SecurityErrorEvent; import flash.media.Video;
+	    import flash.events.Event; import mx.accessibility.ButtonAccImpl; import mx.effects.easing.Back; import flash.sampler.NewObjectSample;
+		import mx.controls.Button; import mx.collections.XMLListCollection;	import mx.collections.SortField; import mx.collections.Sort;
+		import mx.messaging.SubscriptionInfo; import mx.utils.ObjectUtil;import mx.events.FlexEvent;import mx.controls.Alert;import flash.display.Sprite;
+		import flash.events.Event;import mx.core.Application;import mx.core.UIComponent;import mx.events.EffectEvent;import mx.effects.Effect; mx.events.SliderEvent;
+		import mx.events.SliderEvent;import mx.events.CalendarLayoutChangeEvent;import mx.events.DateChooserEvent;import mx.events.CalendarLayoutChangeEvent;
+		import mx.controls.CalendarLayout; import mx.managers.DragManager; import mx.core.DragSource; import mx.events.DragEvent; import flash.events.MouseEvent;
+		import mx.controls.Alert;
+		import mx.controls.DateChooser;
+		import mx.controls.Label;
+		import mx.controls.TextInput;
+		import mx.controls.ToggleButtonBar;
+		import mx.managers.PopUpManager;
+		import mx.rpc.AsyncToken;
+		import mx.rpc.Responder;
+		import mx.rpc.http.mxml.HTTPService;
+		import mx.utils.URLUtil;
+	
+		[Bindable] private var mainWidth:Number = 468;
+		[Bindable] private var mainHeight:Number = 263;
+		protected static const displayOptions:Array = ['month','week','day'];
+		[Bindable] public var myXMLFiles:XMLList = new XMLList();
+		
+		[Bindable] private var myXMLConfig:XMLList = new XMLList();
+		[Bindable] private var myXML:XMLList = new XMLList();
+		[Bindable] private var my_XMLConfig:XML;
+		[Bindable] private var my_XMLFiles:XML;
+		
+		
+		[Bindable] private var PlaylistFontColor:uint = 0xFFFFFF;
+		[Bindable] private var PlaylistFontSize:Number = 12;
+		[Bindable] private var PlaylistFont:String = "Verdana";
+		[Bindable] private var DefaultSelectedIndex:int = 1;
+		
+//		[Bindable] private var CalendarFontColor:uint = 0xFFFFFF;
+//		[Bindable] private var CalendarFontSize:Number = 12;
+//		[Bindable] private var CalendarFont:String = "CalFont";
+		
+		[Bindable] private var currentVolume:Number = 0.7;
+		[Bindable] private var maxVolumeProgressHeight:int = 100;
+		
+		[Bindable] private var sliderDrag:Boolean = false;
+		[Bindable] private var ImgRoot:String;
+		[Bindable] private var VidRoot:String;
+		[Bindable] private var videoCount:Number;
+		[Bindable] private var metadaten_received:Boolean = false;
+		[Bindable] private var videoError:Boolean = false;
+		[Bindable] private var CoverflowY:int = 0;
+		[Bindable] private var fileRef:FileReference = new FileReference(); 
+		[Bindable] private var prevVideoInfo:XML;
+		[Bindable] private var nextVideoInfo:XML;
+		private var Saturation50:Array = [0.58516,0.36564,0.0492,0,0,0.18516,0.76564,0.0492,0,0,0.18516,0.36564,0.4492,0,0,0,0,0,1,0];
+		private var Saturation0:Array = [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0];
+		private var VideoSelected:Boolean = false;
+		private var Sat50:ColorMatrixFilter = new ColorMatrixFilter(Saturation50);
+		[Bindable] private var Sat50Array:Array = [Sat50];
+		private var Sat0:ColorMatrixFilter = new ColorMatrixFilter(Saturation0);
+		[Bindable] private var Sat0Array:Array = [Sat0];
+		private var BannerActive:Boolean = false;
+		private var xmlLoader1:URLLoader = new URLLoader();
+		private var xmlLoader2:URLLoader = new URLLoader();
+
+		private var CurrentVideoURL:String;
+		private var dateGrid:CalendarLayout = new CalendarLayout();
+		private var enabledDays:Array = new Array;
+		
+		[Bindable] public var monthArray:Array = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep", "Okt", "Nov", "Dez" ];	
+		[Bindable] public var daysArray:Array = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Sonnabend"];	
+		[Bindable] public var CalendarList:Array = new Array; 
+		private var CurrentVideoInfo:XML;
+
+		protected function addCalendar():void
+		{		}
+
+		public function load():void	{	
+			cal.range = new DateRange(chooser.selectedDate,chooser.selectedDate);			
+			cal.dataProvider = CalendarList; 
+		}
+
+		protected function goToToday():void	{
+			cal.range = new DateRange(new Date(),new Date());
+		}
+		
+		protected function formatDate(d:Date):String		{
+			var r:String = d.toDateString();
+			return r;
+		}
+	
+		protected function updateRange():void	{
+			cal.displayMode = "auto";
+			if(chooser.selectedRanges.length == 0)
+				return;
+			var selRange:Object = chooser.selectedRanges[0];
+			cal.range = new DateRange(selRange.rangeStart,selRange.rangeEnd);			
+		}
+		
+		protected function rangeChangeHandler():void	{
+			chooser.selectedRanges = [ {rangeStart: cal.range.start, rangeEnd: cal.range.end} ];
+			chooser.displayedYear = cal.range.start.fullYear;
+			chooser.displayedMonth = cal.range.start.month;
+		}
+		
+		protected function displayModeHandler():void 	{
+			switch(cal.displayMode)
+			{	case "day":
+				case "days":
+					displayMode.selectedIndex = 2;
+					break;
+				case "week":
+				case "weeks":
+					displayMode.selectedIndex = 1;
+					break;
+				case "month":
+				default:
+					displayMode.selectedIndex = 0;
+				break;					
+			}
+		}
+		
+		protected function headerClickHandler(d:Date):void		{
+			cal.displayMode = "auto";
+			cal.range = new DateRange(d,d);						
+		}
+
+		protected function dayClickHandler(d:Date):void		{
+			cal.displayMode = "auto";
+			cal.range = new DateRange(d,d);						
+		}
+		
+		protected function displayModeItemClickHandler():void		{
+			cal.displayMode=displayOptions[displayMode.selectedIndex];
+		}
+		
+		protected var _colors:Array = [		0xBB0000,
+														0x00BB00,
+														0x0000BB,
+														0xBBBB00,
+														0xBB00BB,
+														0x00BBBB
+		];
+		
+	
+	//############     INITIALISIERUNG (XML DATENIMPORT)  ##############################################
+		private function init():void {
+			xmlLoader1.addEventListener(Event.COMPLETE, xmlConfigLoaded);
+			var request:URLRequest = new URLRequest("Config.xml");
+			
+			ToolTipManager.hideDelay = 5000;
+            ToolTipManager.showEffect = FadeInToolTip;
+            ToolTipManager.hideEffect = FadeOutToolTip;
+
+			try {	xmlLoader1.load(request);
+			} catch (error:Error) {	trace("Unable to load the required Config-XML-File.");
+				}
+		}			
+		private function xmlConfigLoaded(event:Event):void  {
+			my_XMLConfig = XML(xmlLoader1.data);
+			my_XMLConfig.ignoreWhitespace = true;
+			myXMLConfig = my_XMLConfig.Config;
+			xmlLoader2.addEventListener(Event.COMPLETE, xmlFilesLoaded);
+			var request:URLRequest = new URLRequest(myXMLConfig.Files.toString());
+			try { xmlLoader2.load(request);
+			} 	catch (error:Error) { trace("Unable to load the required Videos-XML-File.");
+				}
+		}	
+		private function xmlFilesLoaded(event:Event):void  {
+			my_XMLFiles = XML(xmlLoader2.data);
+			my_XMLFiles.ignoreWhitespace = true;
+			myXMLFiles = my_XMLFiles.File;
+			var	i:int = 0;	var day:int; var month:int; var year:int;			//Datum in Unix-Timestamp wandeln
+			for each (var xmldate:String in myXMLFiles.Date) {
+				day = int(xmldate.substr(0,2));
+				month = int(xmldate.substr(3,2)); month-=1;
+				year = int(xmldate.substr(6,4));
+				myXMLFiles.Date[i] = (new Date(year, month, day)).getTime();	
+				i++;
+			}		
+        	var xmlList:XMLList = myXMLFiles;      											// nach Datum sortieren
+         	var xmlListCol:XMLListCollection = new XMLListCollection(xmlList);     			// Sort-Object erzeugen	        
+         	var sortAsc:Sort = new Sort(); 													// mit zu sortierenden Elementen bestücken
+          	sortAsc.fields = [new SortField("Date"), new SortField("ThumbName"), new SortField("ThumbFolder"),
+					       	  new SortField("Author"), new SortField("Text"), new SortField("Title"),
+					    	  new SortField("VideoName"), new SortField("VideoFolder")];
+         	xmlListCol.sort = sortAsc;  									// sortieren und Kalender initialisieren
+         	xmlListCol.refresh();   
+     		myXMLFiles = XMLList(xmlListCol); 
+     		
+     		var tempObject:Object = new Object();
+     		var tempImage:Image = new Image();
+     		var tempDate:Date = new Date();
+     		
+			for each (var tempInf:XML in myXMLFiles) {
+				//tempImage.source =  ImgRoot + tempInf.ThumbFolder.toString() + tempInf.ThumbName.toString();
+//				tempObject.date = tempInf.Date;
+//				tempObject.image = tempImage;
+//				tempObject.title = tempInf.VideoName;
+				tempDate = new Date(tempInf.Date);
+				tempDate.hours += 23;
+				var tempEvent:CalendarEvent = new CalendarEvent();
+				tempEvent.start = new Date(tempInf.Date);
+				tempEvent.end = tempDate;
+				CalendarList.push(tempEvent);
+	   		}			 
+	  	load();
+		//	Application.application.load();
+	   		videoCount = myXMLFiles.length(); 
+//			initCalendar();
+			
+			DefaultSelectedIndex = myXMLConfig.Playlist.DefaultSelectedElement;
+			CurrentVideoInfo = myXMLFiles[DefaultSelectedIndex];							 // Daten des ersten Videos holen
+			setPreview(CurrentVideoInfo);
+//			dateGrid.selectedDate = new Date(CurrentVideoInfo.Date);
+//			lblMonth.text = new String(monthArray[dateGrid.displayedMonth]);
+//			lblYear.text = new String(dateGrid.displayedYear);
+//			lblDate.text = new String(dateGrid.selectedDate.date);
+			
+			VidRoot = myXMLConfig.VideosRootPath;					
+			ImgRoot = myXMLConfig.ImagesRootPath;
+			CurrentVideoURL = "rtmp://" + myXMLConfig.VideosRootPath.toString().replace("http://","") +CurrentVideoInfo.VideoFolder.toString() + CurrentVideoInfo.VideoName.toString();
+			CurrentVideo.autoPlay = false;
+			CurrentVideo.volume = 75;
+			CurrentVideo.source = CurrentVideoURL;
+			Slider.addEventListener(MouseEvent.CLICK, sliderClicked);		// Eventlistener für Progress Bar
+			stage.addEventListener(Event.FULLSCREEN, fullScrHandler);		// Handler für FullScreen Status 
+			//++++ CSS STYLES  ++++++++++++++
+			PlaylistFontColor = myXMLConfig.Playlist.FontColor;
+			PlaylistFontSize = 8;
+			PlaylistFont = myXMLConfig.Playlist.Font.toString();
+	//		CalendarFontColor = myXMLConfig.Calendar.FontColor;
+		//	CalendarFontSize = myXMLConfig.Calendar.FontSize;
+			//CalendarFont = myXMLConfig.Calendar.Font.toString();
+			CoverflowY = PlayerCanvas.height+ControlPanelBox.height+24;
+			
+		}
+		  private function dataTipFormat(v:Number):String {	
+				return dateFormatter.format(new Date(v * 1000 || 100));
+		  }
+
+	//############     CALENDAR   ####################################################################
+//	
+//	  private function initCalendar():void {	
+//			dateGrid.x=160;	
+//			dateGrid.y = 0; 		// Add dates to canvas 
+//			dateGrid.setStyle("verticalCenter", 0);
+//			myCalendar.addChild(dateGrid);
+//			dateGrid.filters = [TextShadow];
+//			dateGrid.allowMultipleSelection=false;
+//			dateGrid.showToday=true;
+//			dateGrid.dayNames = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+//			dateGrid.firstDayOfWeek = 1;
+//			dateGrid.setStyle("weekDayStyleName", "CalendarweekDayStyle");
+//			dateGrid.styleName = "CalendardayStyle";
+//			dateGrid.setStyle("todayStyleName", "CalendartodayStyle");
+//			dateGrid.setStyle("highlightAlphas","[0.0, 0.0]");			
+//			dateGrid.setStyle("verticalGap",3);
+//
+//
+//			dateGrid.addEventListener(CalendarLayoutChangeEvent.CHANGE,dateChange);
+//			dateGrid.addEventListener(DateChooserEvent.SCROLL,dateChange);
+//			disableDays();
+//			lblMonth.text = new String(monthArray[dateGrid.displayedMonth]);
+//			lblYear.text = new String(dateGrid.displayedYear);
+//	   }
+//	   private function dateChange(evt:Event):void  {	
+//		  var tempdate:Number; 
+//		  var tempMonth:String = new String(monthArray[dateGrid.displayedMonth]); 
+//		  var tempDate:String = new String(dateGrid.selectedDate.date);
+//		  var i:int=0;
+//			dispatchEvent(evt);
+//			tempdate = dateGrid.selectedDate.getTime();    //coverflow aktualisieren
+//			while (myXMLFiles.Date[i] != tempdate) 
+//				i++;
+//			coverflow.selectedIndex = i;
+//			coverflowSlider.value = (coverflow.selectedIndex*coverflowSlider.snapInterval);
+//			lblMonth.text = tempMonth;
+//			lblYear.text = new String(dateGrid.displayedYear);
+//			if (dateGrid.selectedDate) {
+//				lblDate.text = tempDate;
+//			} 	
+//			if(evt && evt.type == DateChooserEvent.SCROLL) {	//Monat geändert ?
+//				if (lblMonth.text == monthArray[dateGrid.selectedDate.getMonth()])
+//					lblDate.text = tempDate; 
+//				else lblMonth.text = "";
+//			}
+//		}	
+//		private function updateCalendar(evt:Event):void  {
+//			var temp:XML;
+//			if ((evt.currentTarget == coverflow) || (evt.currentTarget == coverflowSlider)) { 
+//				dateGrid.selectedDate = new Date(myXMLFiles.Date[coverflow.selectedIndex]);
+//				dateChange(evt);
+//			} else { 
+//				if (evt.currentTarget == nextVideoPreview)	{		
+//					dateGrid.selectedDate = new Date(nextVideoInfo.Date);
+//					dateChange(evt);
+//				}
+//				if (evt.currentTarget == prevVideoPreview)	{		
+//					dateGrid.selectedDate = new Date(prevVideoInfo.Date);
+//					dateChange(evt);
+//				}
+//			}
+//		}
+//		private function addCalendarListeners():void	{
+//			myCalendar.addEventListener(CalendarLayoutChangeEvent.CHANGE,onDateSelectionChange);
+//		}		
+//		private function onDateSelectionChange(evt:Event):void	{	
+//	
+//		}	
+//		private function disableDays():void {		// Tage, an denen Videos vorhanden sind anschalten 
+//			var day:int; var month:int; var year:int;
+//			var prevDate:Date;
+//			var mydisabledRanges:Array = [];
+//			for each (var xmldate:Number in myXMLFiles.Date) {
+//				enabledDays.push(new Date(xmldate));
+//			}
+//			for each (var date:Date in enabledDays) {
+//				mydisabledRanges.push({rangeStart: new Date(prevDate ? new Date(prevDate.getTime() + 24*60*60*1000 ) : null ), rangeEnd: new Date( date.getTime() - 24*60*60*1000 )});
+//				prevDate = date;
+//			}
+//			mydisabledRanges.push({ rangeStart: new Date( prevDate.getTime() + 24*60*60*1000 ) } );
+//			dateGrid.disabledRanges = mydisabledRanges;
+//		}
+//		
+//		
+//	
+	//#############     PLAYER     ###################################################################
+		private function currentVideo_stateChange(evt:VideoEvent):void {
+          	switch (CurrentVideo.state) {
+					case VideoEvent.PAUSED: 
+							StateLabel.text = "paused"; 
+					break;
+				    case VideoEvent.STOPPED: 
+				    		StateLabel.text = "stop";
+				    		PauseButton.visible = false; PauseButton.enabled = false;
+							PlayButton.visible = true; PlayButton.alpha = 1; PlayButton.enabled = true;
+	 
+				    break;
+				    case VideoEvent.BUFFERING: 
+				    		StateLabel.text = "buffering"; 
+				    break;
+					case VideoEvent.LOADING: 
+							StateLabel.text = "loading"; 
+							
+					break;
+				    case VideoEvent.SEEKING: 
+				    		StateLabel.text = "seeking"; 
+				    break;
+				    case VideoEvent.PLAYING: 
+				    		StateLabel.text = "playing";
+				    		
+	 			    break;
+				  	case VideoEvent.COMPLETE: 
+				  			StateLabel.text = "complete"; 
+				  			stopVideo(); 
+				  	break;	        					  	
+				  	case VideoEvent.DISCONNECTED: {
+				  			StateLabel.text = "disconnected from Server";
+				  			stopVideo(); }
+				  	break;
+				  	case VideoEvent.CONNECTION_ERROR: 
+				  			CurrentVideo.close();
+							FadeOutVideo.play([CurrentVideo]);
+							videoError = true;		// setzen, damit beim klicken auf das gleiche Video nicht der Puffer abgespielt wird
+							StopButton.alpha = 0.1; StopButton.enabled = false;
+							Slider.alpha=0.1; Slider.enabled = false;
+							VideoProgress.alpha = 0.1; VideoProgress.enabled = false;
+							PauseButton.visible = false; PauseButton.enabled = false;
+							PlayButton.visible = true; PlayButton.alpha = 0.1; PlayButton.enabled = false;
+				  			StateLabel.text = "no connection to Server";
+					  		StateLabel.setStyle("color", "#FF0000");
+				  	break;
+			 default: StateLabel.text = evt.type.toString(); break;
+	        }
+         	
+        } 
+		
+		private function setPreview(selectedVideo:XML):void  {
+		if (myXMLFiles.length()>3) {
+				prevVideoInfo = CurrentVideoInfo;
+				var i:int = 0;
+				while (selectedVideo != myXMLFiles[i]) 
+					i++;				
+				if (myXMLFiles[(i+1)] != null) { 
+					if (i>0) prevVideoInfo = myXMLFiles[(i-1)];
+					   else	prevVideoInfo = myXMLFiles[(myXMLFiles.length()-1)];
+					nextVideoInfo = myXMLFiles[(i+1)]; 	
+				} else { 
+					prevVideoInfo = myXMLFiles[(i-1)];
+					nextVideoInfo = myXMLFiles[0];		
+				  }
+			} else  {
+				prevVideoInfo = null;
+				nextVideoInfo = null;
+			}			
+		}
+		private function changeVideo(selectedVid:XML):void  {
+			if (CurrentVideoInfo != selectedVid) 
+				videoError = false;
+			metadaten_received = false;
+			if (CurrentVideo.playing) CurrentVideo.stop();
+				VideoSelected = true;
+			setPreview(selectedVid);
+			CurrentVideoInfo = selectedVid;
+			CurrentVideoURL = "rtmp://" + myXMLConfig.VideosRootPath.toString().replace("http://","") + CurrentVideoInfo.VideoFolder + CurrentVideoInfo.VideoName;	
+			CurrentVideo.source = CurrentVideoURL;
+			playVideo();
+		}
+		private function BannerIn():void{
+			FadeInBanner.play([Banner]);
+		}
+		private function BannerOut():void{
+			FadeOutBanner.play([Banner]);
+		}		
+
+	//#############     CONTROL     ###################################################################
+
+		private function playVideo():void {
+			if (!videoError) {
+	    		PlayButton.visible = false; PlayButton.alpha = 1; PlayButton.enabled = false; 
+   				PauseButton.visible = true; PauseButton.alpha = 1; PauseButton.enabled = true;
+				StopButton.alpha = 1; StopButton.enabled = true;
+	        	Slider.alpha = 1; Slider.enabled = true;
+				VideoProgress.alpha = 1; VideoProgress.enabled = true;
+				if (CurrentVideo.state != VideoEvent.PAUSED) {
+				//	VideoTitle.text = CurrentVideoInfo.Title;
+					if (stage.displayState == StageDisplayState.FULL_SCREEN){
+						  var temp:Array = new Array();
+				//		  if (myCalendar.alpha > 0 ) 
+					//		 temp.push(myCalendar);
+						  if (CoverflowCanvas.alpha > 0)	
+							temp.push(CoverflowCanvas); 
+						  if (PreviewCanvas.alpha > 0)	
+							temp.push(PreviewCanvas);
+						  if (ControlPanelBox.alpha > 0)	
+							temp.push(ControlPanelBox);
+						  if (temp.length != 0) 
+							FadeOutControls.play(temp);
+					}
+					else {	FadeOut.play([PreviewCanvas]);
+						
+					}
+					FadeInVideo.play([CurrentVideo]);
+					if ((stage.displayState == StageDisplayState.NORMAL) && (!BannerActive)) {
+						BannerActive = true;
+						setTimeout(BannerIn, 2000);
+						setTimeout(BannerOut, 3000);
+					}
+				} 
+				CurrentVideo.play();
+			}		
+		}
+		private function pauseVideo():void {
+			PlayButton.visible = true; PlayButton.enabled = true; 
+			PauseButton.visible = false; PauseButton.enabled = false;
+			CurrentVideo.pause();		
+		}	
+		private function stopVideo():void {
+			StopButton.alpha = 0.2; StopButton.enabled=false;
+			Slider.alpha=0.1; Slider.enabled = false;
+			VideoProgress.alpha = 0.1; VideoProgress.enabled = false;
+		//	VideoTitle.text = "weitere Videos: ";
+			FadeOutVideo.play([CurrentVideo]); 
+			if (PreviewCanvas.alpha != 1) FadeIn.play([PreviewCanvas]);
+			if (stage.displayState == StageDisplayState.FULL_SCREEN) {
+				  var temp:Array = new Array();
+//				  if (myCalendar.alpha != 1) 
+//					 temp.push(myCalendar);
+				  if (CoverflowCanvas.alpha != 1)	
+					temp.push(CoverflowCanvas); 
+				  if (PreviewCanvas.alpha != 1)	
+					temp.push(PreviewCanvas);
+				  if (ControlPanelBox.alpha != 1)	
+					temp.push(ControlPanelBox);
+				  if (temp.length != 0) FadeIn.play(temp);
+			  }
+			 CurrentVideo.stop();
+		}
+		private function vDplayheadUpdate(evt:VideoEvent):void {
+			var pTime:Date = new Date(CurrentVideo.playheadTime * 1000 || 100);
+            var tTime:Date = new Date(CurrentVideo.totalTime * 1000);
+			TimeLabel.text = dateFormatter.format(pTime) + " / " + dateFormatter.format(tTime);
+			VideoProgress.setProgress(evt.playheadTime, CurrentVideo.totalTime);
+			if (!sliderDrag) {Slider.value = evt.playheadTime};
+        }	
+        private function changedSlider(evt:SliderEvent):void  {
+        	if (metadaten_received) {
+        		sliderDrag = false;
+        		CurrentVideo.playheadTime = Math.round(Slider.value);
+        	}
+		}
+		private function sliderClicked(evt:MouseEvent):void  {
+        	sliderDrag = false;
+		}
+		private function glowIn(evt:MouseEvent):void  {
+        	GlowPlayerButtonsin.play([evt.currentTarget]);
+		}
+		private function glowOut(evt:MouseEvent):void  {
+        	GlowPlayerButtonsout.play([evt.currentTarget]);
+		}
+		private function muteVideo():void  {
+			currentVolume = VolumeSlider.value;
+			VolumeSlider.value = 0;
+			VolumeBar.height = 0;
+			VolumeButton.visible = false;
+			unmuteButton.visible = true;
+		}
+		private function unmuteVideo():void  {
+			VolumeSlider.value = currentVolume;
+			VolumeBar.height = currentVolume*100;
+			VolumeButton.visible = true;
+			unmuteButton.visible = false;
+		}
+	
+	//#############    FULLSCREEN   ###################################################################
+    
+	private function fullScrHandler(event:FullScreenEvent):void {
+	  if (stage.displayState != StageDisplayState.FULL_SCREEN) {
+			unsetFullScreen();
+		}
+	}
+    private function setFullScreen():void {
+	   try {		
+		mainHeight = CurrentVideo.height;
+		
+		FadeInControls.stop(); FadeOutControls.stop(); FadeOut.stop();
+		stage.displayState = StageDisplayState.FULL_SCREEN;
+		PlayerCanvas.setStyle("backgroundAlpha", 0);
+		PlayerCanvas.width = stage.width; PlayerCanvas.height = stage.height;
+		PlayerCanvas.x = 0; PlayerCanvas.y = 0;
+		CurrentVideo.x = 0; CurrentVideo.y = 0;
+		MAIN.verticalScrollPolicy = "off";
+		CurrentVideo.width=stage.width;  CurrentVideo.height=stage.height;
+		VideoTitle.visible = false;
+		FullScreenButton.visible=false; normalScreenButton.visible=true
+		Banner.y= ControlPanelBox.y-Banner.height;
+	 	PreviewCanvas.alpha = 1; PreviewCanvas.visible = true;
+		CoverflowY= 20;
+			
+		ControlPanelBox.y = (PlayerCanvas.height - PlayerCanvas.height/8);
+//		myCalendar.setStyle("horizontalCenter",(CurrentVideo.width - (myCalendar.width+prevPreviewText.x))/2+prevPreviewText.x/2);
+//		myCalendar.y = prevPreviewText.y-10;
+		if ((CurrentVideo.state == VideoEvent.PLAYING) || (CurrentVideo.state == VideoEvent.PAUSED) ||
+			(CurrentVideo.state == VideoEvent.BUFFERING) || (CurrentVideo.state == VideoEvent.LOADING))
+				FadeOutControls.play([PreviewCanvas,CoverflowCanvas,ControlPanelBox]);
+	   }
+	   catch(err1:Error)  {
+	    	Alert.show(err1.toString());
+	   }
+	}
+	private function unsetFullScreen():void {
+		FadeInControls.stop(); FadeOutControls.stop();
+		ControlPanelBox.height = 48;
+		ControlPanelBox.width = 468;
+		ControlPanelBox.y = 287;
+		ControlPanelBox.alpha = 1;
+//		myCalendar.alpha = 1;
+		FullScreenButton.visible=true; normalScreenButton.visible=false;
+		Banner.y=PlayerCanvas.y+CurrentVideo.height-40;
+//		myCalendar.setStyle("horizontalCenter",0);
+//		myCalendar.y = 530;		
+//		myCalendar.alpha = 1;	
+		CoverflowCanvas.alpha = 1;		
+		coverflowSlider.alpha = 1;
+		
+		if ((CurrentVideo.state == VideoEvent.PLAYING) || (CurrentVideo.state == VideoEvent.PAUSED) || 
+			(CurrentVideo.state == VideoEvent.BUFFERING) || (CurrentVideo.state == VideoEvent.LOADING)) { 
+			PreviewCanvas.alpha = 0; PreviewCanvas.visible = false;
+		} else {
+			FadeIn.play([PreviewCanvas]);
+		}
+		stage.displayState = StageDisplayState.NORMAL
+	 	PlayerCanvas.width = mainWidth; PlayerCanvas.height = mainHeight; PlayerCanvas.y = 24;
+	    CurrentVideo.width = mainWidth-4;  CurrentVideo.height=mainHeight;
+	    CoverflowY = PlayerCanvas.height+ControlPanelBox.height+24;
+		
+	    VideoTitle.visible = true;
+
+	}           
+	private function clickcheck(event:MouseEvent):void {
+		if (event.type == MouseEvent.DOUBLE_CLICK) {
+			if (stage.displayState == StageDisplayState.FULL_SCREEN) 
+				unsetFullScreen(); 
+			else setFullScreen();
+			if (CurrentVideo.state == VideoEvent.PAUSED)
+				CurrentVideo.play();
+		} else {
+			if (CurrentVideo.playing) 
+				pauseVideo();
+			else {
+				if (CurrentVideo.state == VideoEvent.PAUSED)
+					playVideo();
+			}
+		}	
+	}
+		
+	//#############    DRAG AND DROP  ###################################################################
+	
+	private function dragEnterHandler(event:DragEvent, format:String):void {
+       if (event.dragSource.hasFormat(format)) {
+       		DragManager.acceptDragDrop(IUIComponent(event.target));
+      }         
+	}
+	private function doDragDrop(event:DragEvent, format:String):void {
+		var myData:Object;
+		myData = event.dragSource.dataForFormat(format);
+		dateGrid.selectedDate = new Date(XML(myData).Date);
+//		dateChange(event); changeVideo(XML(myData));
+	}   
+    private function dragIt( event:MouseEvent, dsData:XML, myformat:String):void {
+		var dragInitiator:Image = Image(event.currentTarget);
+	    var ds:DragSource = new DragSource();
+        ds.addData(dsData, myformat);               
+        var imageProxy:Image = new Image();
+        imageProxy.load(String(ImgRoot.toString()+dsData.ThumbFolder.toString()+dsData.ThumbName.toString()));
+        imageProxy.height = 110;
+        imageProxy.width = 90;                
+      	DragManager.doDrag(dragInitiator, ds, event, imageProxy);   
+    }
+	
+	//#############    EFFECTS   ###################################################################
+	
+	private function resizeVolumePanel():void {
+		VolumePanel.height = 32;
+		VolumeBar.alpha = 0;
+		VolumeProgress.alpha = 0;
+		VolumeSlider.alpha = 0;
+	}
+	private function fadeInControls(event:MouseEvent):void {
+		if ((CurrentVideo.state != VideoEvent.STOPPED)&&(CurrentVideo.state != VideoEvent.DISCONNECTED)) {
+			if (FadeInControls.isPlaying)  {
+				if  (FadeInControls.target != event.currentTarget) {
+					FadeInControls.alphaTo = 1;
+					FadeInControls.play([event.currentTarget]);
+				}
+			} else {
+				if (event.currentTarget.alpha != 1) {
+					FadeInControls.alphaTo = 1;
+					FadeInControls.play([event.currentTarget]);
+				}
+			}
+		}
+	}
+	private function fadeOutControls(event:MouseEvent):void{
+		if (CurrentVideo.state == VideoEvent.PLAYING) {
+			if (FadeInControls.isPlaying)  {
+				FadeInControls.stop();
+				FadeOutControls.alphaTo = 0;
+				FadeOutControls.play([event.currentTarget]);
+			} else {
+				if (event.currentTarget.alpha != 0) {
+					FadeOutControls.alphaTo = 0;
+					FadeOutControls.play([event.currentTarget]);
+				}
+			}
+		}
+	}
+	private function blend(event:MouseEvent):void {
+		if (event.type == MouseEvent.ROLL_OUT) {  
+			if (VolumeButton.alpha == 0) 
+				GlowPlayerButtonsout.play([unmuteButton,VolumeSlider]) 
+			else GlowPlayerButtonsout.play([VolumeButton,VolumeSlider]);
+		} else {
+			if (VolumeButton.alpha == 0) 
+				GlowPlayerButtonsin.play([unmuteButton,VolumeSlider]) 
+			else GlowPlayerButtonsin.play([VolumeButton,VolumeSlider]);
+		}
+			if (event.type == MouseEvent.ROLL_OUT) {
+				ResizeOutBar.play([VolumeBar]);
+				ResizeOutProgress.play([VolumeProgress]);
+				ResizeOutSlider.play([VolumeSlider]);
+				ResizeOutPanel.play([VolumePanel]);
+			}
+			if (event.type == MouseEvent.ROLL_OVER){
+				ResizeOutPanel.stop(); VolumePanel.height = 240;
+				ResizeInBar.play([VolumeBar]);
+				ResizeInProgress.play([VolumeProgress]);
+				ResizeInSlider.play([VolumeSlider]);
+			}
+	}  
+		
+	//#############    Upload-FrontendEFFECTS   ###################################################################
+
+//		private function onBrowse() : void {
+//		    fileRef = new FileReference();
+//		    fileRef.addEventListener(Event.SELECT, selectHandler);
+//		    try {
+//		        	var success:Boolean = fileRef.browse();
+//		    }  catch (error:Error) 	{
+//		        	trace("Unable to browse for files.");
+//		    	}
+//		    function selectHandler(event:Event):void
+//		    {
+//		        videofile.text = fileRef.name;
+//		        status.text = "Ready for upload";
+//		//        uploadedFile = fileRef.name;
+//		        upload_btn.enabled = true;
+//		    }
+//		}
+//		 
+//		// Event handler for the upload button
+//		// Triggers an upload to the server
+//		 
+//		private function onUpload():void {
+//		   progressbar.label == "";
+//		   var request:URLRequest = new URLRequest("http://127.0.0.1/videoscript/upload.php")
+//		 
+//		  // Add an event listener to monitor the progress of the upload
+//		  fileRef.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+//		 
+//		try
+//		    {
+//		      fileRef.upload(request);
+//		      status.text = "Uploading " + fileRef.name + " ... ";
+//		      browse_btn.enabled = false;
+//		      upload_btn.enabled = false;
+//		    }		 
+//		    catch (error:Error) {
+//		       status.text = "Upload error";
+//		    }
+//		}
+//		
+//		private function progressHandler(event:ProgressEvent):void {
+//  			progressbar.setProgress(Math.floor(event.bytesLoaded/1024),Math.floor(event.bytesTotal/1024));
+//     		progressbar.label = "Uploading .. " + Math.floor(event.bytesLoaded/1024) + " of " + Math.floor(event.bytesTotal/1024) + " kbytes";'';
+//     		if (event.bytesLoaded == event.bytesTotal) {
+//       			 completeHandler();
+//     		}
+//  		}
+// 		private function completeHandler():void {
+//  			status.text = "READY!";
+//     	}
+
+//#############    Hilfsfuntionen  ######################################
+	]]>	
+</mx:Script>
+<mx:Style>
+		ToolTip { 
+        fontFamily: "Verdana"; 
+        fontSize: 11; 
+        fontStyle: "bold"; 
+        color: #FFFFFF;
+        background-color: #000000;
+        background-alpha: 0.8;
+     }	
+		.CoverflowTitle{
+			color:#FFFFFF; 
+            font-family:Verdana;
+            font-size:10px; 
+            font-weight:normal;
+            text-align:center;	}
+        .CalendarweekDayStyle {
+            color:#FFFFFF; 
+            font-family:CalFont;
+            font-size:10px; font-weight:normal; }
+        .CalendardayStyle {
+            color:#FFFFFF; 
+            font-family:CalFont;
+            font-size:11px; 
+            font-weight:normal;
+            rollOverColor:#055f94;
+            disabledColor:#888888; 
+            text-align:left;}
+        .CalendartodayStyle {
+            color:#FF0000; 
+            font-family:CalFont;
+            font-size:12px; font-weight:normal; }
+  	
+</mx:Style>
+
+<!--   EFFECTS    -->
+
+<mx:DateFormatter id="dateFormatter" formatString="NN:SS" />
+<mx:Fade id="FadeInToolTip" alphaTo="1" duration="100" />
+<mx:Fade id="FadeOutToolTip" alphaTo="0" duration="300" />
+<mx:Fade id="FadeInControls"  alphaTo="1" duration="300"/>
+<mx:Fade id="FadeOutControls" alphaTo="0" duration="800" />
+<mx:Fade id="FadeInfo" duration="800" />
+<mx:Resize id="dropResize" />
+<mx:Resize id="CPBlend" />
+<mx:Resize id="InfoResize" duration="500"/>
+<mx:Resize id="ResizeOutBar" effectStart="{ResizeInBar.stop();}" heightFrom="{VolumeBar.height}" heightTo="0" duration="300" startDelay="1500" />
+<mx:Resize id="ResizeOutProgress" effectStart="{ResizeInProgress.stop();}" heightFrom="{VolumeProgress.height}" heightTo="0" duration="300" startDelay="1500"  />
+<mx:Resize id="ResizeOutSlider" effectStart="{ResizeInSlider.stop();}" heightFrom="{VolumeSlider.height}" heightTo="0" duration="300" startDelay="1500" />
+<mx:Resize id="ResizeOutPanel" heightFrom="{VolumePanel.height}" heightTo="32" duration="300" startDelay="1600"/>
+<mx:Resize id="ResizeInBar" effectStart="{ResizeOutBar.stop();}" heightFrom="{VolumeBar.height}" heightTo="{currentVolume*100}" duration="200" />
+<mx:Resize id="ResizeInProgress" effectStart="{ResizeOutProgress.stop();}" heightFrom="{VolumeProgress.height}" heightTo="100" duration="200" />
+<mx:Resize id="ResizeInSlider" effectStart="{ResizeOutSlider.stop();}" heightFrom="{VolumeSlider.height}" heightTo="100" duration="400" />
+
+<mx:Fade id="FadeIn" alphaTo="1" duration="800" effectStart="{FadeOut.stop(); PreviewCanvas.visible = true;}"  />
+<mx:Fade id="FadeOut" alphaTo="0" duration="400" effectStart="{FadeIn.stop();}" effectEnd="{ PreviewCanvas.visible = false;}" />
+<mx:Fade id="FadeInVideo" alphaTo="1" duration="400" effectStart="{FadeOutVideo.stop();}" />
+<mx:Fade id="FadeOutVideo" alphaTo="0" duration="800" effectStart="{FadeInVideo.stop();}"/>
+<mx:Fade id="FadeInBanner" alphaTo="1" duration="800" />
+<mx:Fade id="FadeOutBanner"  alphaTo="0" duration="800" effectEnd="BannerActive=false" />
+<mx:Glow id="GlowPlayerButtonsin" duration="100" alphaTo="1" blurXFrom="0" blurXTo="1" blurYFrom="0" blurYTo="1" color="0xffffff" />
+<mx:Glow id="GlowPlayerButtonsout" duration="100" alphaTo="0" blurXFrom="0" blurXTo="1" blurYFrom="0" blurYTo="1" color="0xffffff" />
+<mx:DropShadowFilter id="TextShadow" distance="2" angle="45" blurX="0" blurY="0" alpha="0.8" color="0x111111" />
+
+<!-- #################    MAIN CANVAS    ######################################### -->
+
+<mx:Canvas  id="MAIN" borderStyle="none" backgroundAlpha="0" y="0" width="100%"
+		height="100%" horizontalScrollPolicy="off" horizontalCenter="0">		
+	<mx:Label id="VideoTitle" text="Willkommen beim Mediacenter von SACHSEN FERNSEHEN." textAlign="left" 
+			height="20" width="468" color="#FFFFFF" y="3" fontWeight="normal" 
+			alpha="0.5" x="{MAIN.x}" horizontalCenter="0"/>
+
+	<!--  +++++++++++++++++   PLAYER   +++++++++++++++++++++++++++++++++++++++++++ -->
+
+	<mx:Canvas id="PlayerCanvas" width="468" height="{mainHeight}" 
+		dragEnter="dragEnterHandler(event, 'c52format');" dragDrop="doDragDrop(event, 'c52format');" 
+ 		backgroundAlpha="0.2" y="24"  backgroundImage="assets/Playerbackground.png" doubleClickEnabled="true" 
+ 		doubleClick="{clickcheck(event);}"
+		click="{clickcheck(event);}"
+		horizontalScrollPolicy="off" verticalScrollPolicy="off" borderStyle="none" horizontalCenter="0">
+		<mx:VideoDisplay id="CurrentVideo" width="{mainWidth-4}" height="261" visible="true" horizontalCenter="0" verticalCenter="0"  
+			bufferTime="3.0" autoBandWidthDetection="false" backgroundAlpha="0"
+			playheadUpdateInterval="{(1/30)*1000}" playheadUpdate="vDplayheadUpdate(event);" 
+			stateChange="currentVideo_stateChange(event);" 
+			metadataReceived="{metadaten_received=true; Slider.alpha = 1; Slider.enabled = true; Slider.maximum = CurrentVideo.totalTime;}" 
+			volume="{VolumeSlider.value}" />
+		<mx:Canvas id="PreviewCanvas" x="0" y="0" width="420" height="220" alpha="1" backgroundAlpha="0" backgroundColor="#000000"
+			   	   rollOver="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeInControls(event)" 
+  				   rollOut="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeOutControls(event)" >
+			<mx:Panel id="prevVideoPreview" x="60" y="40" width="90" height="68" color="{PlaylistFontColor}" fontWeight="normal" fontFamily="{PlaylistFont}"
+					fontSize="{PlaylistFontSize}" useHandCursor="true" buttonMode="true" 
+					rollOver="glowIn(event); prevName.alpha=1; prevText.alpha=0.8" 
+					rollOut="glowOut(event); prevName.alpha=0.5; prevText.alpha=0.3"
+					borderSkin="@Embed(source='assets/videocaprahmen_aussen.png')"
+					backgroundAlpha="1" horizontalAlign="center" verticalAlign="middle" paddingTop="12" 
+					click = "changeVideo(prevVideoInfo); 
+					if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp; (CurrentVideo.state == VideoEvent.PLAYING))
+					if (CoverflowCanvas.alpha != 0) FadeOutControls.play([CoverflowCanvas])" >
+				<mx:Image id="prevVideoImage" width="80" height="45" alpha="1"
+						useHandCursor="true" buttonMode="true"
+						verticalAlign="middle" horizontalAlign="center" 
+						horizontalCenter="0" verticalCenter="0" 
+						source="{ImgRoot+prevVideoInfo.ThumbFolder.toString()+prevVideoInfo.ThumbName.toString()}"	/>
+			</mx:Panel>
+			<mx:Canvas 	id="prevPreviewText" y="40" x="175" height="68"
+				useHandCursor="true" buttonMode="true" 
+				rollOver="GlowPlayerButtonsin.play([prevVideoPreview]);prevName.alpha=1;prevText.alpha=0.8;" 
+				rollOut="GlowPlayerButtonsout.play([prevVideoPreview]);prevName.alpha=0.5;prevText.alpha=0.3;"	>
+				<mx:Label id="prevName" alpha="0.5" text="{prevVideoInfo.Title}"  color="#FFFFFF" fontWeight="bold"
+						filters="{[TextShadow]}" 
+						click=" changeVideo(prevVideoInfo); 
+						if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp; (CurrentVideo.state == VideoEvent.PLAYING))
+							if (CoverflowCanvas.alpha != 0) FadeOutControls.play([CoverflowCanvas])"  height="19"/>
+				<mx:Label id="prevText" alpha="0.3" text="{prevVideoInfo.Text}" color="#FFFFFF" y="19"
+						filters="{[TextShadow]}" 
+						  textAlign="left"
+						  click=" changeVideo(prevVideoInfo); 
+						if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp; (CurrentVideo.state == VideoEvent.PLAYING))
+							if (CoverflowCanvas.alpha != 0) FadeOutControls.play([CoverflowCanvas])"   height="49"/>
+			</mx:Canvas>
+			<mx:Panel id="nextVideoPreview" width="90" height="68" color="{PlaylistFontColor}" fontWeight="normal" fontFamily="{PlaylistFont}"
+				fontSize="{PlaylistFontSize}"  
+				useHandCursor="true" buttonMode="true" 
+				rollOver="glowIn(event); nextName.alpha=1; nextText.alpha=0.8" 
+				rollOut="glowOut(event); nextName.alpha=0.5; nextText.alpha=0.3" 
+				borderSkin="@Embed(source='assets/videocaprahmen_aussen.png')"
+				backgroundAlpha="1" horizontalAlign="center" verticalAlign="middle" paddingTop="12" x="60" y="142"
+				click="changeVideo(nextVideoInfo); 
+					if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp;(CurrentVideo.state == VideoEvent.PLAYING))
+						if (CoverflowCanvas.alpha != 0) FadeOutControls.play([CoverflowCanvas])" >
+				<mx:Image id="nextVideoImage" width="80" height="45" verticalAlign = "middle" horizontalAlign = "center"  
+						source="{ImgRoot+nextVideoInfo.ThumbFolder.toString() + nextVideoInfo.ThumbName.toString()}"  
+					horizontalCenter="0" verticalCenter="0" alpha="1" />
+			</mx:Panel>
+			<mx:Canvas id="nextPreviewText" y="142" x="175" height="68" 
+				rollOver = "GlowPlayerButtonsin.play([nextVideoPreview]); nextName.alpha=1; nextText.alpha=0.8;"
+				rollOut = "GlowPlayerButtonsout.play([nextVideoPreview]); nextName.alpha=0.5; nextText.alpha=0.3;"
+				useHandCursor="true" buttonMode="true" >
+				<mx:Label id="nextName" alpha="0.5" text="{nextVideoInfo.Title}" color="#FFFFFF" 
+						filters="{[TextShadow]}" 
+						fontWeight="bold" useHandCursor="true" buttonMode="true" 
+						click="changeVideo(nextVideoInfo);
+						if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp; (CurrentVideo.state == VideoEvent.PLAYING))
+							if (CoverflowCanvas.alpha != 0) FadeOutControls.play([CoverflowCanvas])"  height="19"/>
+				<mx:Label id="nextText" alpha="0.3" height="49" text="{nextVideoInfo.Text}" color="#FFFFFF" y="19" textAlign="left"
+						filters="{[TextShadow]}" 
+						useHandCursor="true" buttonMode="true" 
+						click="changeVideo(nextVideoInfo);
+						if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp; (CurrentVideo.state == VideoEvent.PLAYING))
+							if (CoverflowCanvas.alpha != 0) FadeOutControls.play([CoverflowCanvas])" />			
+			</mx:Canvas>
+		</mx:Canvas>	
+		<mx:Image id="Banner" useHandCursor="true" buttonMode="true" 
+							source="assets/banner.png" 
+							alpha="0" horizontalCenter="0"	width="460" 
+							height="30" verticalCenter="110"/>
+	</mx:Canvas>	
+
+	<!--  +++++++++++++++++   CONTROL PANEL   +++++++++++++++++++++++++++++++++++++++++++ -->
+	
+	<mx:HBox id="ControlPanelBox" width="468" height="48" alpha="1" visible="true"
+		 	 y="287"
+		 	 rollOver="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeInControls(event)" 
+		 	 rollOut="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeOutControls(event)" 
+		 	 horizontalAlign="center" verticalAlign="middle" horizontalCenter="0">
+		<mx:Canvas id="ControlPanel" name="ControlPanel" width="464" height="48" 
+			 backgroundImage="assets/ControlBackground.png" borderStyle="none" 
+		 	 horizontalScrollPolicy="off" verticalScrollPolicy="off" backgroundAlpha="1">
+		<mx:Image  source="assets/playButton.png" alpha="1" visible="true" x="{(VideoProgress.x/4)-16}" y="8" height="32" width="32" id="PlayButton" 
+				   mouseOver="{GlowPlayerButtonsin.play([PlayButton]);}" 
+				   mouseOut="{GlowPlayerButtonsout.play([PlayButton])}" 
+				   useHandCursor="true" buttonMode="true" 
+				   click = "playVideo();" />
+		<mx:Image  source="assets/pauseButton.png" alpha="1" visible="false" x="{(VideoProgress.x/4)-16}" y="8" height="32" width="32" id="PauseButton"
+			   	   mouseOver="{GlowPlayerButtonsin.play([PauseButton]);}"
+			   	   mouseOut="{GlowPlayerButtonsout.play([PauseButton])}" 
+			   	   useHandCursor="true" buttonMode="true" click="pauseVideo()" />
+		<mx:Image  source="assets/stopButton.png" alpha="0.2" visible="true" x="{(3*VideoProgress.x/4)-32}" y="8" width="32" height="32" id="StopButton" 	
+				   mouseOver="{GlowPlayerButtonsin.play([StopButton]);}" 
+				   mouseOut="{GlowPlayerButtonsout.play([StopButton])}" 
+				   useHandCursor="true" buttonMode="true" click="stopVideo();" />		
+		<mx:Image  source="assets/fullScreen.png" alpha="1" visible="true" x="{(ControlPanel.width-((VideoProgress.x/4)+16))}" y="8" width="32" height="32" id="FullScreenButton" 
+				   mouseOver="{GlowPlayerButtonsin.play([FullScreenButton]);}" 
+				   mouseOut="{GlowPlayerButtonsout.play([FullScreenButton])}" 
+				   useHandCursor="true" buttonMode="true" click="{setFullScreen(); }" />	
+		<mx:Image  source="assets/unmuteButton.png" alpha="1" visible="false" x="420" y="8" width="32" height="32" id="normalScreenButton" 
+				   mouseOver="{GlowPlayerButtonsin.play([FullScreenButton]);}" 
+				   mouseOut="{GlowPlayerButtonsout.play([FullScreenButton]);}" 
+				   useHandCursor="true" buttonMode="true" click="{unsetFullScreen(); }" />	
+		<mx:Label  id="TimeLabel" text="" 
+				   color="#D5D5D5" fontWeight="normal" fontSize="10" 
+				   horizontalCenter="0" alpha="0.3" verticalCenter="1"/>
+		<mx:Label  id="StateLabel" text="" 
+				   color="#FFFFFF" fontWeight="bold" fontSize="10"
+				   horizontalCenter="0" alpha="0.1" verticalCenter="15"/>
+		<mx:ProgressBar id="VideoProgress" width="200" height="24" mode="manual" alpha="1" enabled="false"  
+				    labelPlacement="center" label="" horizontalCenter="0" verticalCenter="0" 
+					barSkin="@Embed(source='assets/progress.png')" 
+					trackSkin="@Embed(source='assets/progress_back.png')" color="#FFFFFF" fontWeight="normal" fontSize="8"/>
+		<mx:HSlider id="Slider" width="200" height="24" alpha="1" enabled="false"
+		 			rollOver = "GlowPlayerButtonsin.play([Slider]);"
+		 			rollOut = "GlowPlayerButtonsout.play([Slider]);"
+		 			useHandCursor="true" buttonMode="true" 
+		 			thumbSkin="@Embed(source='assets/trackicon.png')" 
+		 			trackSkin="@Embed(source='assets/trackbackground.png')"
+		 			thumbDrag="{sliderDrag=true}" change="{sliderDrag=true; changedSlider(event)}"
+		 			dataTipFormatFunction="dataTipFormat"
+		 			horizontalCenter="0" verticalCenter="-2"/>
+		</mx:Canvas>
+	</mx:HBox>
+
+	<!--  +++++++++++++++++   COVERFLOW   +++++++++++++++++++++++++++++++++++++++++++ -->
+	
+	<mx:Canvas id="CoverflowCanvas" y="{CoverflowY}" width="468" height="180" 
+		backgroundAlpha="0" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		borderStyle="none" horizontalCenter="0" 
+		rollOver="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeInControls(event);" 
+		rollOut="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeOutControls(event);"	
+	>
+		<containers:CoverFlowContainer 
+			id="coverflow" width="468" height="180" borderStyle="none" backgroundAlpha="0" 
+			horizontalCenter="0" textAlign="center" 
+			segments="6" reflectionEnabled="false"  
+			useHandCursor="true" buttonMode="false" 
+			selectedIndex="{DefaultSelectedIndex}"
+			click=" coverflowSlider.value = (coverflow.selectedIndex*coverflowSlider.snapInterval);" >
+		<mx:Repeater  id="rep" dataProvider="{myXMLFiles}">
+			<mx:Panel width="154" height="116" color="{PlaylistFontColor}" fontWeight="normal" fontFamily="{PlaylistFont}"
+					fontSize="10"  title="{rep.currentItem.VideoName}" titleStyleName="CoverflowTitle"
+					borderSkin="@Embed(source='assets/videocaprahmen_aussen.png')"
+					backgroundAlpha="1" horizontalAlign="center" verticalAlign="middle" paddingTop="22"
+					useHandCursor="true" buttonMode="true" >
+					<mx:Image alpha="1" width="142" height="80" filters="{Sat50Array}"
+						verticalAlign = "middle" horizontalAlign = "center" useHandCursor="true" buttonMode="true" 
+						source = "{ImgRoot+rep.currentItem.ThumbFolder.toString() + rep.currentItem.ThumbName.toString()}"  
+						rollOver = "{event.currentTarget.filters = Sat0Array}"
+						rollOut =  "{event.currentTarget.filters = Sat50Array}" 
+						click = "{changeVideo(event.currentTarget.getRepeaterItem());
+						if ((stage.displayState == StageDisplayState.FULL_SCREEN) &amp;&amp; (CurrentVideo.state == VideoEvent.PLAYING))
+							if(PreviewCanvas.alpha != 0) FadeOutControls.play([PreviewCanvas])}"  
+						toolTip="{'Themen:\n'+rep.currentItem.Text}" 
+						mouseMove = "dragIt(event, event.currentTarget.getRepeaterItem(),'c52format');"
+				 />			
+				</mx:Panel>
+			</mx:Repeater>
+		</containers:CoverFlowContainer>
+		
+		<mx:HSlider id="coverflowSlider" width="80%" height="40" alpha="1" enabled="true"
+		 			horizontalCenter="0" verticalCenter="70" useHandCursor="true" buttonMode="true" 
+		 			thumbSkin="@Embed(source='assets/sliderthumb.png')" 
+		 			trackSkin="@Embed(source='assets/sliderline.png')"
+		 			tickColor="#FFFFFF" tickThickness="3" 
+		 			maximum="{coverflow.width}" liveDragging="true"
+           			thumbDrag="{sliderDrag=true}" 
+           			snapInterval="{Math.round(coverflow.width/(videoCount-1))}"
+            		value = "{DefaultSelectedIndex*Math.round(coverflow.width/(videoCount-1))}"
+		 			change="{coverflow.selectedIndex = Math.round(coverflowSlider.value/coverflowSlider.snapInterval);
+		 			}"  />
+	</mx:Canvas>
+<!--
+  +++++++++++++++++   CALENDAR   +++++++++++++++++++++++++++++++++++++++++++
+
+	<mx:Canvas id="myCalendar" borderStyle="none" backgroundAlpha="0" y="{PlayerCanvas.height+ControlPanelBox.height+34+CoverflowCanvas.height}" alpha="1"
+		horizontalCenter="0" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		rollOver="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeInControls(event)" 
+		rollOut="if (stage.displayState == StageDisplayState.FULL_SCREEN) fadeOutControls(event)" 
+		creationComplete="addCalendarListeners();" >		
+		<mx:Image source="assets/CalendarBase2.png" y="0" alpha="0.5" />
+		<mx:Image source="assets/Hidepod_Left2.png" buttonMode="true" y="22" x="31" toolTip="Vorheriger Monat" click="dateGrid.stepDate(0, -1, event)" />
+		<mx:Image source="assets/Hidepod_Right2.png" buttonMode="true" y="22" x="112" toolTip="Nächster Monat" click="dateGrid.stepDate(0, 1, event)" height="41" />
+		<mx:Label   id="lblDate" x="53" y="52" alpha="0.8" 
+					filters="{[TextShadow]}" fontFamily="{CalendarFont}"
+					fontSize="55" textAlign="center" color="#FFFFFF" />
+		<mx:Label   id="lblMonth" x="75" y="25" color="{CalendarFontColor}"
+					filters="{[TextShadow]}"
+					fontSize="{CalendarFontSize}" fontFamily="{CalendarFont}" fontWeight="bold" />
+		<mx:Label   id="lblYear" x="70" y="125" alpha="0.5" color="{CalendarFontColor}" 
+					filters="{[TextShadow]}"
+					fontSize="12" fontFamily="{CalendarFont}" fontWeight="bold" />
+	</mx:Canvas> 
+
+	  +++++++++++++++++   VOLUME   +++++++++++++++++++++++++++++++++++++++++++ -->
+
+	<mx:Canvas id="VolumePanel" width="32" height="32" x="{((ControlPanelBox.x+ControlPanel.x+ControlPanel.width) - (3*VideoProgress.x/4)+32)}" rotation="180" 
+			y="{ControlPanelBox.y+ControlPanelBox.height/2+16}" backgroundColor="#FFFFFF" 
+			backgroundAlpha="0"
+			useHandCursor="true" buttonMode="true" 
+			rollOver="{blend(event);}" 
+			rollOut="{blend(event);}"   
+			horizontalScrollPolicy="off" verticalScrollPolicy="off" >
+			<mx:ProgressBar id="VolumeProgress" name="VolumeProgress" y="40" x="-10" 
+				width="48" height="0" alpha="1" 
+				useHandCursor="true" buttonMode="true" 
+				mode="manual" labelPlacement="center" label="neu" barSkin="@Embed(source='assets/trackbackground.png')" 
+				trackSkin="@Embed(source='assets/VolumeBackground.png')" color="#D5D5D5" fontWeight="normal" 
+				fontSize="8" />
+			<mx:VBox id="VolumeBar" x="9" y="40" width="12" height="0" alpha="1" backgroundImage="@Embed(source='assets/progress2.png')" />
+			<mx:VSlider id="VolumeSlider" x="40"  y="140" name="VolumeSlider" width="50" height="0" rotation="180" alpha="1" 
+		        useHandCursor="true" buttonMode="true" 
+		        minimum="0.0" maximum="1.0"
+				value="{currentVolume}" snapInterval="0.01" tickInterval="0.1" 
+		        thumbSkin="@Embed(source='assets/trackicon2.png')" 
+		        trackSkin="@Embed(source='assets/trackbackground.png')"
+		        liveDragging ="true" thumbDrag="{currentVolume=VolumeSlider.value; unmuteVideo(); VolumeBar.height=(VolumeSlider.value*100)}"
+		        tickLength="0" tickThickness="0" 
+		        change="{currentVolume=VolumeSlider.value; unmuteVideo(); VolumeProgress.setProgress(VolumeSlider.value,1)}"/>
+		    <mx:Image  source="assets/volumeButton.png" x="0" y="0" alpha="1" visible="true" width="32" height="32" id="VolumeButton" 
+						useHandCursor="true" buttonMode="true" click="muteVideo()"/>
+			<mx:Image  source="assets/unmuteButton.png" x="0" y="0" alpha="1" visible="false" width="32" height="32" id="unmuteButton" 
+						useHandCursor="true" buttonMode="true" click="unmuteVideo()"/>
+	</mx:Canvas>
+	
+	
+ <mx:Canvas id="CalendarCanvas" horizontalCenter="0" y="540" backgroundImage="assets/Playerbackground.png" backgroundAlpha="0.2">
+
+	
+	<mx:Canvas width="468" borderStyle="none" height="272" x="0" y="10">
+		<mx:Canvas height="267"  borderStyle="none"  width="178">
+			<mx:Canvas width="166" height="25" horizontalCenter="0" y="5">
+				<mx:Image  source="assets/Hidepod_Left2.png" buttonMode="true" toolTip="vor" 
+			   	    click="cal.previous(); "  verticalAlign="middle" horizontalCenter="-60" verticalCenter="0"/>
+				<mx:Image  source="assets/ButtonBackground.png" click="Application.application.goToToday();" buttonMode="true" 
+						 horizontalCenter="0" verticalCenter="0" width="47" height="15"/>
+			 	<mx:Image  source="assets/Hidepod_Right2.png" buttonMode="true" 
+						toolTip="zurück" click="cal.next();" verticalAlign="middle" horizontalCenter="60" verticalCenter="0"/>
+			</mx:Canvas> 
+			<mx:Canvas  width="178" y="30" height="52" horizontalCenter="0">
+				<mx:Label styleName="headerLabel" text="{Application.application.formatDate(cal.range.start)}" 
+					 color="#FFFFFF" fontFamily="verdana" fontSize="10" fontWeight="normal" width="166" height="25" y="0" horizontalCenter="0" textAlign="center"/>			
+				<mx:ToggleButtonBar dataProvider="{displayOptions}" selectedIndex="0"  
+					 id="displayMode" itemClick="Application.application.displayModeItemClickHandler()"  y="25" height="25" width="166" horizontalCenter="0"/>				
+			</mx:Canvas>
+			<mx:Canvas width="178"  y="85" height="178" horizontalCenter="0">
+				<mx:DateChooser id="chooser" change="Application.application.updateRange()" allowDisjointSelection="false" 
+					firstDayOfWeek="1" allowMultipleSelection="true"  width="166" height="166" horizontalCenter="0" verticalCenter="0" backgroundAlpha="0">
+					<mx:selectedDate>
+						<mx:Date month="8" date="1" fullYear="2006" />
+					</mx:selectedDate>
+				</mx:DateChooser>
+				<mx:Label x="10" y="150" text="" width="158" height="168" id="aus" color="#FFFFFF"/>
+			</mx:Canvas>
+		  <mx:Canvas width="178" height="20" y="35" >
+				<local:Busy id="busy" width="178"  height="20"/>
+			</mx:Canvas>
+		</mx:Canvas>
+		<mx:Canvas borderStyle="none" width="290" height="267" x="178" >
+			<mx:Canvas borderStyle="none" height="263" width="290" x="0" >
+			<qs:CalendarDisplay  id="cal" width="280" height="257" 
+										headerClick="Application.application.headerClickHandler(event.dateTime)" 
+										dayClick="Application.application.dayClickHandler(event.dateTime)"
+										displayModeChange="Application.application.displayModeHandler()"
+										animated="true"
+										change="Application.application.rangeChangeHandler()" />
+			</mx:Canvas>
+		</mx:Canvas>
+</mx:Canvas>
+
+	</mx:Canvas>
+
+	
+	<!--  +++++++++++++++++   UPLOAD +++++++++++++++++++++++++++++++++++++++++++ 
+
+	 <mx:HBox id="mainui" height="330" autoLayout="false" horizontalCenter="0" y="730">
+		<mx:Form id="uploadform" horizontalScrollPolicy="off" verticalScrollPolicy="off" y="770">
+  			<mx:FormItem label="Choose your file:" id="formitem">
+	     		<mx:TextInput id="videofile" editable="false" />
+  			</mx:FormItem>
+  			<mx:FormItem id="browsearea" >
+     			<mx:Button label="Browse" click="onBrowse()" x="180" y="359" id="browse_btn"/>
+     			<mx:Button id="upload_btn" click="onUpload()" label="Upload" width="68" enabled="false" />
+  			</mx:FormItem>
+  		</mx:Form>
+ 	</mx:HBox>
+	<mx:ProgressBar id="progressbar" name="uploadProgress" horizontalCenter="0" y="850"	alpha="1" /> 
+	-->
+</mx:Canvas>
+
+</mx:Application>

@@ -1,0 +1,55 @@
+<Configurations>
+	<Config>
+	   <VideoWidth>468</VideoWidth>
+	   <VideoHeight>300</VideoHeight>
+	   <VideosRootPath>http://localhost/</VideosRootPath>
+	   <ImagesRootPath>http://localhost:5080/VideoArchiv3/</ImagesRootPath>
+	   <Files>Videos.xml</Files>
+	   <PlaySingleVideo>myvideo.flv</PlaySingleVideo>
+	   <Player>
+		  <FontColor>0xFFFFFF</FontColor>
+		  <FontSize>12</FontSize>
+		  <Font>Verdana</Font>
+		  <ControlBarFadeOutAfter>3</ControlBarFadeOutAfter>
+		  <DefaultVolume>60</DefaultVolume>
+		  <AutoStart>0</AutoStart>
+		  <AllowFullScreen>1</AllowFullScreen>
+		  <AllowDownload>1</AllowDownload>
+		  <Copyright>SACHSEN FERNSEHEN</Copyright>
+		  <Url>http://www.sachsen-fernsehen.de</Url>
+	   </Player>
+	   <Calendar>
+			<FontColor>0xFFFFFF</FontColor>
+			<FontSize>12</FontSize>
+			<Font>Verdana</Font>
+			<Visible>1</Visible>
+			<MonthsBack>12</MonthsBack>
+			<MonthsFuture>0</MonthsFuture>
+	   </Calendar>
+	   <Playlist>
+			<FontColor>0xFFFFFF</FontColor>
+			<FontSize>10</FontSize>
+			<Font>verdana</Font>
+			<Visible>1</Visible>
+			<MaxElements>20</MaxElements>
+			<DefaultSelectedElement>2</DefaultSelectedElement>
+	   </Playlist>
+	   <Logo>
+		 <Visible>1</Visible>
+		 <ImagePath>SFLogo.png</ImagePath>
+		 <OffsetX>420</OffsetX>
+		 <OffsetY>20</OffsetY>
+	   </Logo>
+	   <StartBehavior>
+		  <DefaultKeyFrame Second="3">1</DefaultKeyFrame>
+		  <VideoList Count="2">0</VideoList>
+		  <DefaultImage Src="MyVideo.jpg">0</DefaultImage>
+	   </StartBehavior>
+	   <EndBehavior>
+		  <VideoList Count="2">1</VideoList>
+		  <DefaultImage Src="MyVideo.jpg">0</DefaultImage>
+		  <PlayNextInPlaylist>0</PlayNextInPlaylist>
+	   </EndBehavior>
+	   <PreRollAds></PreRollAds><MidRollAds></MidRollAds> <PostRollAds></PostRollAds>
+	</Config>
+</Configurations>
